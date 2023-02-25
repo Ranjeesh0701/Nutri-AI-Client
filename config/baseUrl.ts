@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:5000";
+const BASE_URL = "https://9a8b-2409-40f4-9-a21c-25fe-994e-e2b7-b2d4.in.ngrok.io/";
 
 export default BASE_URL;
 
