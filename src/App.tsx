@@ -8,6 +8,7 @@ import Register from './pages/Register';
 
 import {useAuthState} from 'react-firebase-hooks/auth';
 import Dashboard from './pages/Dashboard';
+import DietChange from './pages/DietChange';
 
 function App() {
   const [user, setUser] = useState<any>(localStorage.getItem('user'));
@@ -34,6 +35,8 @@ function App() {
 
         {!user && <Route path="/dashboard" element={<Navigate to='/' />} />}   
         {user && <Route path="/dashboard" element={<Dashboard user={user} />} />}
+
+        <Route path="/user/change/diet" element={<DietChange user={user} />} />
       </Routes>
     </Router>
   )

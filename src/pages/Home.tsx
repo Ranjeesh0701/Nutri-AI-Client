@@ -1,16 +1,9 @@
-import React from 'react'
-import { auth } from '../../config/firebase'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar';
 
 const Home = () => {
 
     const navigate = useNavigate();
-
-    const logout = () => {
-        localStorage.removeItem('user');
-        auth.signOut();
-    }
 
     const redirectToDashboard = () => {
         navigate('/dashboard');

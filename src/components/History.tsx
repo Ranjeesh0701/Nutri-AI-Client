@@ -3,9 +3,7 @@ import React, { Fragment } from 'react'
 import { AiFillDelete } from 'react-icons/ai';
 import { IoFastFood, IoFastFoodSharp } from 'react-icons/io5';
 
-const History = ({historyLoading, setHistoryLoading, history, setHistory, changeDietFromHistory, modalChangeDietFromHistoryActive, setModalChangeDietFromHistoryActive, changeDietConfirm, savedDiet}:any) => {
-    console.log(savedDiet);
-    console.log(history);
+const History = ({historyLoading, setHistoryLoading, history, setHistory, changeDietFromHistory, modalChangeDietFromHistoryActive, setModalChangeDietFromHistoryActive, changeDietConfirm, savedDiet, changeDietFromHistoryLoading}:any) => {
   return (
     <>
         <div className="min-h-[calc(100vh-5rem)] bg-[#023430]">
@@ -32,7 +30,7 @@ const History = ({historyLoading, setHistoryLoading, history, setHistory, change
                                                         hist.isCustomDiet ? (
                                                             <div className='py-4 px-4 rounded-lg bg-black bg-opacity-25 w-full relative'>
                                                                 {
-                                                                        savedDiet.id != hist.id ? (
+                                                                        savedDiet?.id != hist?.id ? (
                                                                             <button className='absolute bg-green-500 text-white text-sm font-bold px-4 py-2 rounded-lg -right-2 -top-5' onClick={() => changeDietFromHistory(hist.id)}>
                                                                                 Use Diet
                                                                             </button>
@@ -66,7 +64,7 @@ const History = ({historyLoading, setHistoryLoading, history, setHistory, change
                                                             <>
                                                                 <div className='bg-black bg-opacity-25 px-4 py-4 my-10 rounded-lg relative'>
                                                                     {
-                                                                        savedDiet.id != hist.id ? (
+                                                                        savedDiet?.id != hist.id ? (
                                                                             <button className='absolute bg-green-500 text-white text-sm font-bold px-4 py-2 rounded-lg -right-2 -top-5' onClick={() => changeDietFromHistory(hist.id)}>
                                                                                 Use Diet
                                                                             </button>
@@ -180,13 +178,33 @@ const History = ({historyLoading, setHistoryLoading, history, setHistory, change
                         </div>
                     </div>
                     <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                        <button
-                        type="button"
-                        className="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
-                        onClick={() => {changeDietConfirm();setModalChangeDietFromHistoryActive(false);}}
-                        >
-                        Change plan
-                        </button>
+                        {
+                            changeDietFromHistoryLoading ? (
+                                <button
+                                type="button"
+                                className="inline-flex items-center gap-3 w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                                disabled
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <div
+                                            className="inline-block h-4 w-4 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                                            role="status">
+                                        </div>
+                                    </div>
+                                    <p>Changing</p>
+                                </button>
+                            )
+                            :
+                            (
+                                <button
+                                type="button"
+                                className="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                                onClick={() => changeDietConfirm()}
+                                >
+                                Change plan
+                                </button>
+                            )
+                        }
                         <button
                         type="button"
                         className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

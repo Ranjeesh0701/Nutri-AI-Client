@@ -21,7 +21,9 @@ const Navbar = () => {
                         </div>
                         <div><p className='text-sm cursor-pointer text-gray-700'>How it works?</p></div>
                     </div>
-                    <button onClick={logout} className='bg-green-400 px-4 py-2 rounded-3xl font-semibold text-sm hover:bg-green-300 border border-slate-900'>Logout</button>
+                    {
+                        auth.currentUser && <button onClick={logout} className='bg-green-400 px-4 py-2 rounded-3xl font-semibold text-sm hover:bg-green-300 border border-slate-900'>Logout</button>
+                    }
                 </div>
             </div>
         </nav>

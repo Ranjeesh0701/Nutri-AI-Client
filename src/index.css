@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+._inputLabel_jafxa_3 {
+    font-size: 13px;
+}
+
+.multiple-value-text-input-item-container {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.multiple-value-text-input-item {
+    font-size: 12px;
+}

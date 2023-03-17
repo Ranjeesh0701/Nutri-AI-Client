@@ -1,5 +1,5 @@
 import { Fragment, ReactComponentElement, ReactElement, useEffect, useRef, useState, VideoHTMLAttributes } from "react"
-import { FaHistory, FaBars, FaPepperHot, FaAdjust, FaBell, FaCaretDown, FaSearch, FaCamera, FaUpload, FaCaretLeft } from "react-icons/fa"
+import { FaHistory, FaBars, FaPepperHot, FaAdjust, FaBell, FaCaretDown, FaSearch, FaCamera, FaUpload, FaCaretLeft, FaShare, FaShareAlt } from "react-icons/fa"
 import { Dialog, Menu, Transition } from '@headlessui/react'
 import { toast } from "react-toastify";
 import Video from "../components/Video";
@@ -12,6 +12,7 @@ import Diet from "../components/Diet";
 import { useSearchParams } from "react-router-dom";
 import Settings from "../components/Settings";
 import History from "../components/History";
+import Shares from "../components/Shares";
 
 const Dashboard = ({user}:any) => {
 
@@ -143,7 +144,7 @@ const Dashboard = ({user}:any) => {
         })
         if(!savedDiet)
             setDietLoading(false)
-    }, [userId])
+    }, [userId, savedDiet])
 
     const [timeFrame, setTimeFrame] = useState('day')
 
@@ -191,7 +192,6 @@ const Dashboard = ({user}:any) => {
     }
 
     const deleteCustomMeal = (id:any) => {
-        console.log(id);
         setCustomDiet(customDiet.filter(diet => diet.id !== id))
     }
 
@@ -214,27 +214,38 @@ const Dashboard = ({user}:any) => {
     }   
 
     const saveCustomPlan = () => {
+        if(customPlan && (customDiet && customDiet.filter((diet:any) => diet.name !== '').length <= 0)) {
+            toast.error('Please fill all the diet plan fields', {
+                position: 'bottom-right',
+                autoClose: 1000
+            })
+            return;
+        }
         setDietLoading(true)
         const userId = auth.currentUser?.uid;
         const timestamp = new Date();
-        db.collection('dietplan').add({
+        const ref = db.collection('dietplan').doc();
+        ref.set({
             userId,
             meals: customDiet,
             createdAt: timestamp,
-            isCustomDiet: true
+            isCustomDiet: true,
+            id: ref.id
         }).then((res) => {
             console.log(res);
             setSavedDiet({
-                id: userId,
+                userId,
                 meals: customDiet,
                 createdAt: timestamp,
-                isCustomDiet: true
+                isCustomDiet: true,
+                id: ref.id
             });
             db.collection('history').add({
                 userId,
                 meals: customDiet,
                 createdAt: timestamp,
                 isCustomDiet: true,
+                id: ref.id
             }).then((res) => {
                 setDietLoading(false)
             })
@@ -247,11 +258,22 @@ const Dashboard = ({user}:any) => {
         })
     }
 
+    const [changePlanOpen, setChangePlanOpen] = useState(false);
+    const [changePlanLoading, setChangePlanLoading] = useState(false);
+
     const changePlan = () => {
+        setChangePlanLoading(true);
         db.collection('dietplan').where('userId','==',userId).get().then(snapshot => {
-            snapshot.docs[0].ref.delete();
+            snapshot.docs[0].ref.delete().then(() => {
+                setSavedDiet(null);
+                setChangePlanLoading(false);
+                setChangePlanOpen(false);
+            })
+        }).catch((err) => {
+            console.log(err);
+            setChangePlanLoading(false);
+            setChangePlanOpen(false);
         })
-        setSavedDiet(null);
     }
 
     const saveSuggestedPlan = () => {
@@ -260,20 +282,22 @@ const Dashboard = ({user}:any) => {
         setDietLoading(true)
         const userId = auth.currentUser?.uid;
         const timestamp = new Date();
-        db.collection('dietplan').add({
+        const ref = db.collection('dietplan').doc();
+        ref.set({
             userId,
             meals: currentMeal.meals,
             createdAt: timestamp,
             isCustomDiet: false,
-            nutrients: currentMeal.nutrients
+            nutrients: currentMeal.nutrients,
+            id: ref.id
         }).then((res) => {
             setSavedDiet({
-                id: userId,
+                userId,
                 meals: currentMeal.meals,
                 createdAt: timestamp,
                 isCustomDiet: false,
-                nutrients: currentMeal.nutrients  
-
+                nutrients: currentMeal.nutrients,
+                id: ref.id
             });
             db.collection('history').add({
                 userId,
@@ -281,7 +305,7 @@ const Dashboard = ({user}:any) => {
                 createdAt: timestamp,
                 isCustomDiet: false,
                 nutrients: currentMeal.nutrients,
-                id: res.id
+                id: ref.id
             }).then((res) => {
                 setDietLoading(false)
             })
@@ -308,6 +332,13 @@ const Dashboard = ({user}:any) => {
             setFoodViewLoading(true);
         })
     }
+
+
+    const [shareModal, setShareModal] = useState(false);
+
+    const shareUnSavedDiet = () => {
+
+    }   
 
     // Settings page
 
@@ -340,19 +371,101 @@ const Dashboard = ({user}:any) => {
         setActiveDietFromHistory(id);
     }
 
+    const [changeDietFromHistoryLoading, setChangeDietFromHistoryLoading] = useState(false);
+
     const changeDietConfirm = () => {
-        const currentMeal = history.filter((hist:any) => hist.id === activeDietFromHistory);
-        db.collection('dietplan').where('userId', '==',auth.currentUser?.uid).get().then(querySnapshot => {
-            if(querySnapshot.docs[0]) {
-                querySnapshot.docs[0].ref.update(currentMeal[0]).then((res) => {
-                    setActive(3)
-                }).catch(err => {
-                    console.log(err);
-                })
-            }
-        })
+        setChangeDietFromHistoryLoading(true)
+        const currentMeal = history.filter((hist:any) => hist.id === activeDietFromHistory)[0];
+        if(currentMeal.isCustomDiet) {
+            const userId = auth.currentUser?.uid;
+            const timestamp = new Date();
+            const ref = db.collection('dietplan').doc();
+            ref.set({
+                userId,
+                meals: currentMeal.meals,
+                createdAt: timestamp,
+                isCustomDiet: true,
+                id: currentMeal.id
+            }).then((res) => {
+                console.log(res);
+                setSavedDiet({
+                    userId,
+                    meals: currentMeal.meals,
+                    createdAt: timestamp,
+                    isCustomDiet: true,
+                    id: currentMeal.id
+                });
+                setChangeDietFromHistoryLoading(false)
+                setModalChangeDietFromHistoryActive(false);
+                setActive(3);
+            }).catch(err => {
+                console.log(err);
+                setChangeDietFromHistoryLoading(false)
+                setModalChangeDietFromHistoryActive(false);
+            })
+        }
+        else {
+            const timestamp = new Date();
+            const ref = db.collection('dietplan').doc();
+            ref.set({
+                userId,
+                meals: currentMeal.meals,
+                createdAt: timestamp,
+                isCustomDiet: false,
+                nutrients: currentMeal.nutrients,
+                id: currentMeal.id
+            }).then((res) => {
+                setSavedDiet({
+                    userId,
+                    meals: currentMeal.meals,
+                    createdAt: timestamp,
+                    isCustomDiet: false,
+                    nutrients: currentMeal.nutrients,
+                    id: currentMeal.id
+                });
+                setChangeDietFromHistoryLoading(false);
+                setModalChangeDietFromHistoryActive(false);
+                setActive(3);
+            }).catch(err => {
+                console.log(err);
+                setChangeDietFromHistoryLoading(false);
+                setModalChangeDietFromHistoryActive(false);
+            })
+        }
     }
 
+    // Shares page
+    const [shareDiet, setShareDiet] = useState<any>([{
+        id: 0,
+        name: '',
+        time: ''
+    }]);
+
+    const updateShareFoodName = (value:any, id:any) => {
+        setShareDiet(shareDiet.map((diet:any) => {
+            if(diet.id === id) {
+                diet.name = value;
+            }
+            return diet;
+        }))
+    } 
+
+    const updateShareMealTime = (value:any, id:any) => {
+        setShareDiet(shareDiet.map((diet:any) => {
+            if(diet.id === id) {
+                diet.time = value;
+            }
+            return diet;
+        }))
+    }   
+
+    const deleteShareMeal = (id:any) => {
+        setShareDiet(shareDiet.filter((diet:any) => diet.id !== id))
+    }
+
+    const addShareMealField = () => {
+        setShareDiet([...shareDiet, {id: customDiet.length++, name: '', time: ''}]);
+    }
 
   return (
     <>
@@ -375,6 +488,10 @@ const Dashboard = ({user}:any) => {
                             <div className={`px-5 flex items-center gap-4 my-2 py-5 cursor-pointer ${active === 3 && 'bg-[#023430] border-l-4 border-l-[#00f24c]'}`} onClick={() => {if(active === 3)return; setActive(3)}}>
                                 <FaPepperHot color="white" />
                                 <p className='text-white'>Diet Plan</p>
+                            </div>
+                            <div className={`px-5 flex items-center gap-4 my-2 py-5 cursor-pointer ${active === 4 && 'bg-[#023430] border-l-4 border-l-[#00f24c]'}`} onClick={() => {if(active === 4)return; setActive(4)}}>
+                                <FaShareAlt color="white" />
+                                <p className='text-white'>Shares</p>
                             </div>
                             {/* <div className={`px-5 flex items-center gap-4 my-2 py-5 cursor-pointer ${active === 4 && 'bg-[#023430] border-l-4 border-l-[#00f24c]'}`} onClick={() => {if(active === 4)return; setActive(4)}}>
                                 <FaBell color="white" />
@@ -469,6 +586,7 @@ const Dashboard = ({user}:any) => {
                                 setModalChangeDietFromHistoryActive={setModalChangeDietFromHistoryActive}
                                 changeDietConfirm={changeDietConfirm}
                                 savedDiet={savedDiet}
+                                changeDietFromHistoryLoading={changeDietFromHistoryLoading}
                             />
                         )
                     }  
@@ -503,12 +621,25 @@ const Dashboard = ({user}:any) => {
                                 savedDiet={savedDiet}
                                 changePlan={changePlan}
                                 saveSuggestedPlan={saveSuggestedPlan}
+                                shareUnSavedDiet={shareUnSavedDiet}
+                                shareModal={shareModal}
+                                setShareModal={setShareModal}
+                                changePlanOpen={changePlanOpen}
+                                setChangePlanOpen={setChangePlanOpen}
+                                changePlanLoading={changePlanLoading}
                             />
                         )
                     }  
                     {
                         active && active === 4 && (
-                            <Dash />
+                            <Shares
+                                shareDiet={shareDiet}
+                                setShareDiet={setShareDiet}
+                                updateShareFoodName={updateShareFoodName}
+                                updateShareMealTime={updateShareMealTime}
+                                deleteShareMeal={deleteShareMeal}
+                                addShareMealField={addShareMealField}
+                            />
                         )
                     }  
                     {
